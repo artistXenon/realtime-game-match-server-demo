@@ -1,0 +1,25 @@
+{
+  "name": "in-a-mazing-match-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx functions-framework --target=main"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/artistXenon/in-a-mazing-match-server.git"
+  },
+  "author": "Ailre",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/artistXenon/in-a-mazing-match-server/issues"
+  },
+  "homepage": "https://github.com/artistXenon/in-a-mazing-match-server#readme",
+  "devDependencies": {
+    "@google-cloud/functions-framework": "^3.2.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
