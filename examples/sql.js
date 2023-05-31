@@ -1,12 +1,8 @@
 const { Pool } = require('pg')
 
-const pool = new Pool({
-    user: 'postgres',
-    host: '34.146.206.23',
-    database: 'postgres',
-    password: '@rtist!nside',
-    port: 5432,
-});
+const { config } = require('../config-load');
+
+const pool = new Pool(config().sql);
 
 (async () => {
     const client = await pool.connect();
