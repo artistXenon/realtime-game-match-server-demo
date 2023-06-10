@@ -4,6 +4,7 @@ const { v4 } = require('uuid');
 
 const { decrypt } = require("../crypto");
 const { config } = require("../config-load")
+const { insertCredential, validateCredential } = require("../db");
 
 const { client_id, client_secret, redirect_uri } = config().oauth;
 
@@ -25,18 +26,13 @@ async function code2Token(code) {
                 'content-type': 'application/x-www-form-urlencoded;charset=utf-8'
             }
         });
-        const { access_token, refresh_token, id_token } = res.data;
+        const { refresh_token, id_token } = res.data;
 
         const { sub: id } = JSON.parse(atob(id_token.split(".")[1]));
 
         const session_key = v4();
-
-        object = { // todo: replace w/ database access
-            access_token, 
-            refresh_token, 
-            id,
-            session_key
-        };
+        await insertCredential(id, refresh_token, session_key);
+        
 
         return {
             session_key,
@@ -54,17 +50,18 @@ async function code2Token(code) {
     }
 }
 
-async function token2Token(token, id, machine) {
+async function token2Token(token, requested_id, requested_machine) {
     try {
-        const saved_session_key = object?.session_key;
+        const cred = await validateCredential(requested_id);
+
+        const saved_session_key = cred?.skey;
         if (saved_session_key == null) {
             return undefined;
         }
         const dec = await decrypt(saved_session_key, token);
-        const { machine: dec_machine, id: dec_id } = JSON.parse(dec);
+        const { machine: decryted_machine, id: decrypted_id } = JSON.parse(dec);
 
-        if (dec_machine !== machine || dec_id !== id) {
-            console.log(machine);
+        if (decryted_machine !== requested_machine || decrypted_id !== requested_id) {
             return undefined;
         }
 
@@ -72,7 +69,7 @@ async function token2Token(token, id, machine) {
             method: 'post',
             url: 'https://oauth2.googleapis.com/token',
             data: qs.stringify({
-                refresh_token: object.refresh_token,
+                refresh_token: cred.gtoken,
                 client_id,
                 client_secret,
                 grant_type: 'refresh_token',
@@ -87,32 +84,26 @@ async function token2Token(token, id, machine) {
             method: 'get',
             url: `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${access_token}`,
         });
-        const { id: req_id } = data;
-
-        if (id !== req_id) {
+        const { id: validated_id } = data;
+        if (requested_id !== validated_id) {
             return undefined;
         }
 
         const session_key = v4();
 
-        object = { // todo: replace w/ database access
-            access_token, 
-            refresh_token: object.refresh_token, 
-            id,
-            session_key
-        };
+        await insertCredential(requested_id, cred.gtoken, session_key);
 
         return {
             session_key,
-            id 
+            id: requested_id 
         };
     } catch (e) {
         const error_code = e.response?.status;
         if (error_code != null) {
             // this is axios
-            console.log(String(new Date()) + "code2Token: " + error_code);
+            console.log(String(new Date()) + "token2Token: " + error_code);
         }
-        console.log(String(new Date()) + "code2Token: " + e);
+        console.log(String(new Date()) + "token2Token: " + e);
         return undefined;
     }
 

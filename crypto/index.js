@@ -1,4 +1,4 @@
-const { scryptSync, createCipheriv, createDecipheriv } = require("crypto");
+const { scryptSync, createCipheriv, createDecipheriv, createHash } = require("crypto");
 
 const algorithm = 'aes-192-cbc';
 const iv = Buffer.alloc(16, 0);
@@ -15,7 +15,7 @@ function encrypt(password, plain) {
         encrypted += cipher.final('hex');
         resolve(encrypted);
     });    
-};
+}
 
 function decrypt(password, code) {
     return new Promise((resolve) => {
@@ -29,9 +29,17 @@ function decrypt(password, code) {
         decrypted += decipher.final('utf8');
         resolve(decrypted);
     });
-};
+}
+
+function hashCheck(values, hash) {
+    values.sort();
+    const plain = values.join('');
+    const generated_hash = createHash('sha256').update(plain).digest('base64');
+    return generated_hash === hash;
+}
 
 module.exports = {
     encrypt,
-    decrypt
+    decrypt,
+    hashCheck
 };

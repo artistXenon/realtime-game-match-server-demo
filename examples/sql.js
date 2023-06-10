@@ -1,20 +1,22 @@
-const { Pool } = require('pg')
+const sql = require("mysql2");
 
-const { config } = require('../config-load');
+const { config } = require("../config-load")
 
-const pool = new Pool(config().sql);
+const sqlConfig = config().sql;
+
+const pool = sql.createPool(sqlConfig).promise();
+
 
 (async () => {
-    const client = await pool.connect();
-
-    const res = await client.query("SELECT current_timestamp;");
-    console.log(res);
-    client.release();
+    const [rows, fields] = await pool.query(`SELECT current_timestamp;`);
+    console.log(rows, fields);
 })();
-// CREATE TABLE lobby (id char(5) PRIMARY KEY, server varchar(j), private boolean, started boolean)
-// CREATE TABLE user_cred (id varchar(l) PRIMARY KEY, gtoken varchar(m), skey char(n), lid reference lobby(id))
-// CREATE TABLE user_info (level smallint, progress smallint)
-//optional: CREATE TABLE cosmetics (uid varchar(l), cosmetics /* array of ids */)
+
+
+// CREATE TABLE lobby (id char(5) PRIMARY KEY, server TINYTEXT, private boolean, started boolean)
+// CREATE TABLE user_cred (id DECIMAL(21) PRIMARY KEY, gtoken TINYTEXT, skey CHAR(36), lid char(5) references lobby(id))
+// optional: CREATE TABLE user_info (level smallint, progress smallint)
+// optional: CREATE TABLE cosmetics (uid DECINAML(21), cosmetics /* array of ids */)
 
 
 
