@@ -8,13 +8,19 @@ const pool = sql.createPool(sqlConfig).promise();
 
 
 (async () => {
-    const [rows, fields] = await pool.query(`SELECT current_timestamp;`);
-    console.log(rows, fields);
+    const id = 'SiP2h';
+    let private = false, server = 'localhost:5001';
+    const syntax = `INSERT INTO lobby (id, server, private, started) VALUES ('${id}', '${server}', ${private}, false);`;
+    try {
+        const res = await pool.query(syntax);
+    } catch (e) {
+        console.log(e.code === 'ER_DUP_ENTRY');
+    }
 })();
 
 
-// CREATE TABLE lobby (id char(5) PRIMARY KEY, server TINYTEXT, private boolean, started boolean)
-// CREATE TABLE user_cred (id DECIMAL(21) PRIMARY KEY, gtoken TINYTEXT, skey CHAR(36), lid char(5) references lobby(id))
+// CREATE TABLE lobby (id CHAR(5) PRIMARY KEY, server TINYTEXT, private BOOLEAN, started BOOLEAN)
+// CREATE TABLE user_cred (id DECIMAL(21) PRIMARY KEY, gtoken TINYTEXT, skey CHAR(36), lid CHAR(5) references lobby(id) ON DELETE SET NULL)
 // optional: CREATE TABLE user_info (level smallint, progress smallint)
 // optional: CREATE TABLE cosmetics (uid DECINAML(21), cosmetics /* array of ids */)
 

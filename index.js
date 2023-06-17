@@ -1,8 +1,7 @@
 const express = require("express");
 const helmet = require("helmet");
 
-
-const { code2Token, token2Token } = require("./routes");
+const { code2Token, token2Token, onJoin } = require("./routes");
 const { hashCheck } = require("./crypto");
 
 const app = express();
@@ -13,7 +12,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.get('/', (req, res) => {
-    res.send("you don't usually reach here unless you are me..\nyour connection is recorded and will be further inspected for suspisious requests in near future");
+    res.send(
+        "you don't usually reach here unless you are me..\n" + 
+        "your connection is recorded and will be further inspected for suspicious requests in near future."
+    );
 });
 
 app.post("/code", async (req, res) => {
@@ -34,8 +36,8 @@ app.post("/token", async (req, res) => {
     res.json(session);
 });
 
-app.post("/join/:private/:lobby", async (req, res) => {
-    const { private, lobby } = req.params;
+app.post("/join", async (req, res) => {
+    const { private, lobby } = req.query;
     const { id, hash } = req.body;
     const vals = [ id, private ];
     if (lobby !== undefined) {
@@ -44,10 +46,12 @@ app.post("/join/:private/:lobby", async (req, res) => {
     if (!hashCheck(vals, hash)) {
         return res.status(400).send("err");
     }
-    const lobby_confirm = ""; // todo route function for creating/joining lobby to return server address and lobby id
+    const lobbyRes = await onJoin(id, private === "true", lobby);
+    // todo: route function for creating/joining lobby to return server address and lobby id
 
-    res.json(lobby_confirm);
+    res.json(lobbyRes);
 });
+
 
 app.listen(5002);
 
