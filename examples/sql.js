@@ -19,7 +19,7 @@ const pool = sql.createPool(sqlConfig).promise();
 })();
 
 
-// CREATE TABLE lobby (id CHAR(5) PRIMARY KEY, server TINYTEXT, private BOOLEAN, started BOOLEAN)
+// CREATE TABLE lobby (id CHAR(5) PRIMARY KEY, server TINYTEXT, private BOOLEAN, started BOOLEAN DEFAULT 0, tcp_port SMALLINT UNSIGNED, udp_port SMALLINT UNSIGNED)
 // CREATE TABLE user_cred (id DECIMAL(21) PRIMARY KEY, gtoken TINYTEXT, skey CHAR(36), lid CHAR(5) references lobby(id) ON DELETE SET NULL)
 // optional: CREATE TABLE user_info (level smallint, progress smallint)
 // optional: CREATE TABLE cosmetics (uid DECINAML(21), cosmetics /* array of ids */)

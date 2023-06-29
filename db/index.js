@@ -21,22 +21,24 @@ async function validateCredential(raw_id) {
 }
 
 async function searchForOpenPubs() {
-    const [rows, _] = await pool.query(`SELECT id, server FROM lobby WHERE private=false AND started=false LIMIT 5;`);
+    const [rows, _] = await pool.query(`SELECT id, server, tcp_port AS tcp, udp_port AS udp FROM lobby WHERE private=false AND started=false LIMIT 5;`);
     return rows;
 }
 
-async function createLobby(raw_private, raw_server) {
+async function createLobby(raw_private, raw_server, raw_tcp_port, raw_udp_port) {
     const raw_id = randomLobbyID();
     const id = sql.escape(raw_id);
     const isPrivate = raw_private === true;
     const server = sql.escape(raw_server);
-    const syntax = `INSERT INTO lobby (id, server, private, started) VALUES (${id}, ${server}, ${isPrivate}, false);`;
+    const tcp = sql.escape(raw_tcp_port);
+    const udp = sql.escape(raw_udp_port);
+    const syntax = `INSERT INTO lobby (id, server, tcp_port, udp_port, private) VALUES (${id}, ${server}, ${tcp}, ${udp}, ${isPrivate});`;
     try {
         await pool.query(syntax);   
         return raw_id;
     } catch (e) {
         if (e.code === 'ER_DUP_ENTRY') {
-            return await createLobby(raw_private, raw_server); // TODO: this is very inefficient. do notice.
+            return await createLobby(raw_private, raw_server, raw_tcp_port, raw_udp_port); // TODO: this is very inefficient. do notice.
         } else {
             console.log(e);
         }

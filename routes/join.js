@@ -2,28 +2,34 @@ const axios = require("axios");
 
 const { searchForOpenPubs, createLobby, applyJoin, clearLobby } = require("../db");
 
-const MAIN_SERVER_UDP = 'localhost:5001';
-const MAIN_SERVER_HTTP = 'localhost:5000';
+const servers = [
+    {
+        server: "localhost",
+        http: 5000,
+        udp: 5001,
+        tcp: 5003
+    }
+]
+
 
 async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
-    const server = "localhost";
-    const port = 5001;
+    const { server, http, udp, tcp } = servers[0];
 
     let lobby = lobbyId;
     
     if (isPrivate) {
         if (lobbyId === "") {
-            lobby = await createLobby(isPrivate, MAIN_SERVER_UDP);
+            lobby = await createLobby(isPrivate, server, tcp, udp);
         } 
     } else {
         const pubs = await searchForOpenPubs();
 
         if (pubs.length === 0) {
-            lobby = await createLobby(isPrivate, MAIN_SERVER_UDP);
+            lobby = await createLobby(isPrivate, server, tcp, udp);
             try {
                 const { data } = await axios({
                     method: 'get',
-                    url: `http://${MAIN_SERVER_HTTP}/create?id=${lobby}&private=${isPrivate}`,
+                    url: `http://${server}:${http}/create?id=${lobby}&private=${isPrivate}`,
                 });
             } catch (e) {
                 console.log(e.response.data);
@@ -38,13 +44,13 @@ async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
     try {
         const { data } = await axios({
             method: 'get',
-            url: `http://${MAIN_SERVER_HTTP}/join?uid=${id}&lid=${lobby}`,
+            url: `http://${server}:${http}/join?uid=${id}&lid=${lobby}`,
         });
         // TODO: write lobby server and port from this response
 
         return {
             server,
-            port,
+            udp, tcp,
             lobby
         };
     } catch (e) {
