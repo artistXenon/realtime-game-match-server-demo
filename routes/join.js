@@ -20,6 +20,14 @@ async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
     if (isPrivate) {
         if (lobbyId === "") {
             lobby = await createLobby(isPrivate, server, tcp, udp);
+            try {
+                const { data } = await axios({
+                    method: 'get',
+                    url: `http://${server}:${http}/create?id=${lobby}&private=${isPrivate}`,
+                });
+            } catch (e) {
+                console.log(e?.response?.data);
+            }
         } 
     } else {
         const pubs = await searchForOpenPubs();
@@ -40,8 +48,8 @@ async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
         }
     }
 
-    await applyJoin(id, lobby);
     try {
+        await applyJoin(id, lobby);
         const { data } = await axios({
             method: 'get',
             url: `http://${server}:${http}/join?uid=${id}&lid=${lobby}`,
@@ -65,7 +73,11 @@ async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
                     }
                     console.log(response);
                 }
-            } else console.log(e);
+            } else if (e.errno === 1452) {
+                console.log("lobby does not exist");
+            } else {
+                console.log(e);
+            }
         return {};
     }
 }
