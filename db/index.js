@@ -46,7 +46,7 @@ async function createLobby(raw_private, raw_server, raw_tcp_port, raw_udp_port) 
 }
 
 async function clearLobby(lobbyId) {
-    const id = sql.escape(lobbyId)
+    const id = sql.escape(lobbyId);
     const syntax = `DELETE FROM lobby WHERE id=${id} LIMIT 1;`;
     try {
         return await pool.query(syntax);

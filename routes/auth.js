@@ -28,8 +28,8 @@ async function code2Token(code) {
 
         const { sub: id } = JSON.parse(atob(id_token.split(".")[1]));
 
-        const session_key = v4();
-        await insertCredential(id, refresh_token, session_key);        
+        const session_key = v4();  
+        await insertCredential(id, refresh_token, session_key);     
 
         return {
             session_key,
