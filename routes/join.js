@@ -49,12 +49,13 @@ async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
     }
 
     try {
-        await applyJoin(id, lobby);
         const { data } = await axios({
             method: 'get',
             url: `http://${server}:${http}/join?uid=${id}&lid=${lobby}`,
         });
         // TODO: write lobby server and port from this response
+
+        await applyJoin(id, lobby);
 
         return {
             server,
@@ -71,6 +72,8 @@ async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
                     if (!isSecondAttempt) {
                         return await onJoin(id, isPrivate, lobbyId, true);
                     }
+                    console.log(response);
+                } else if (response === "lobby is full") {
                     console.log(response);
                 }
             } else if (e.errno === 1452) {
