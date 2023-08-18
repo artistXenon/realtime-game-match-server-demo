@@ -5,6 +5,7 @@ const { v4 } = require('uuid');
 const { decrypt } = require("../crypto");
 const { config } = require("../config-load")
 const { insertCredential, validateCredential } = require("../db");
+const { axiosError, neverHappens } = require("../error");
 
 const { client_id, client_secret, redirect_uri } = config().oauth;
 
@@ -36,13 +37,12 @@ async function code2Token(code) {
             id 
         };
     } catch (e) {
-        const error_code = e.response?.status;
-        if (error_code != null) {
-            // this is axios
-            console.log(String(new Date()) + "code2Token: " + error_code);
+        const ae = axiosError(e);
+        if (ae) {
+            console.log(`[${new Date()}] AUTH#code2Token: ${ae.status}`);
+        } else {
+            neverHappens("AUTH#code2Token", e);
         }
-        console.log(String(new Date()) + "code2Token: " + e);
-        // console.log(e);
         return undefined;
     }
 }
@@ -97,13 +97,11 @@ async function token2Token(token, requested_id, requested_machine) {
             id: requested_id 
         };
     } catch (e) {
-        const error_code = e.response?.status;
-        if (error_code != null) {
-            // this is axios
-            console.log(String(new Date()) + "token2Token: " + error_code);
-        } else {            
-            console.log(token, requested_id, requested_machine);
-            console.log(String(new Date()) + "token2Token: " + e);
+        const ae = axiosError(e);
+        if (ae) {
+            console.log(`[${new Date()}] AUTH#token2Token: ${ae.status}`);
+        } else {
+            neverHappens("AUTH#token2Token", e);
         }
         return undefined;
     }

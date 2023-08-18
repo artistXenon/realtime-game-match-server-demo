@@ -1,6 +1,7 @@
 const sql = require("mysql2");
 
-const { config } = require("../config-load")
+const { config } = require("../config-load");
+const { neverHappens } = require("../error");
 
 const sqlConfig = config().sql;
 
@@ -38,9 +39,10 @@ async function createLobby(raw_private, raw_server, raw_tcp_port, raw_udp_port) 
         return raw_id;
     } catch (e) {
         if (e.code === 'ER_DUP_ENTRY') {
-            return await createLobby(raw_private, raw_server, raw_tcp_port, raw_udp_port); // TODO: this is very inefficient. do notice.
+            // TODO: this is very inefficient. do notice.
+            return await createLobby(raw_private, raw_server, raw_tcp_port, raw_udp_port); 
         } else {
-            console.log(e);
+            neverHappens("DB#createLobby", e);
         }
     }
 }
@@ -50,7 +52,9 @@ async function clearLobby(lobbyId) {
     const syntax = `DELETE FROM lobby WHERE id=${id} LIMIT 1;`;
     try {
         return await pool.query(syntax);
-    } catch (e) {}
+    } catch (e) {
+        neverHappens("DB#clearLobby", e);
+    }
 }
 
 function applyJoin(raw_user_id, raw_lobby_id) {

@@ -1,6 +1,7 @@
 const axios = require("axios");
 
 const { searchForOpenPubs, createLobby, applyJoin, clearLobby } = require("../db");
+const { axiosError } = require("../error");
 
 const servers = [
     {
@@ -10,7 +11,6 @@ const servers = [
         tcp: 5003
     }
 ]
-
 
 async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
     const { server, http, udp, tcp } = servers[0];
@@ -26,7 +26,7 @@ async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
                     url: `http://${server}:${http}/create?id=${lobby}&private=${isPrivate}`,
                 });
             } catch (e) {
-                console.log(e?.response?.data);
+                console.log(`[${new Date()}] JOIN#onJoin/create[0]: ${e.response.data}`);
             }
         } 
     } else {
@@ -40,7 +40,7 @@ async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
                     url: `http://${server}:${http}/create?id=${lobby}&private=${isPrivate}`,
                 });
             } catch (e) {
-                console.log(e.response.data);
+                console.log(`[${new Date()}] JOIN#onJoin/create[1]: ${e.response.data}`);
             }
         } else {
             lobby = pubs[0].id;
@@ -63,24 +63,23 @@ async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
             lobby
         };
     } catch (e) {
-            const error_code = e.response?.status;
-            // this is axios
-            if (error_code != null) {
-                const response = e.response.data;
-                if (response === "lobby does not exist") {
-                    await clearLobby(lobby);
-                    if (!isSecondAttempt) {
-                        return await onJoin(id, isPrivate, lobbyId, true);
-                    }
-                    console.log(response);
-                } else if (response === "lobby is full") {
-                    console.log(response);
+        const ae = axiosError(e);
+        if (ae) {
+            console.log(`[${new Date()}] JOIN#onJoin/join: ${ae.status}`);
+            if (ae.response === "lobby does not exist") {
+                await clearLobby(lobby);
+                if (!isSecondAttempt) {
+                    return await onJoin(id, isPrivate, lobbyId, true);
                 }
-            } else if (e.errno === 1452) {
-                console.log("lobby does not exist");
-            } else {
-                console.log(e);
-            }
+            } 
+            // else if (ae.response === "lobby is full") {
+            //     // handled
+            // }
+        } else if (e.errno === 1452) {
+            console.log("lobby does not exist");
+        } else {
+            neverHappens("JOIN#onJoin/join", e);
+        }
         return {};
     }
 }
