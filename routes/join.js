@@ -1,7 +1,7 @@
 const axios = require("axios");
 
 const { searchForOpenPubs, createLobby, applyJoin, clearLobby } = require("../db");
-const { axiosError } = require("../error");
+const { axiosError, neverHappens } = require("../error");
 
 const servers = [
     {
@@ -26,7 +26,11 @@ async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
                     url: `http://${server}:${http}/create?id=${lobby}&private=${isPrivate}`,
                 });
             } catch (e) {
-                console.log(`[${new Date()}] JOIN#onJoin/create[0]: ${e.response.data}`);
+                if (e.code === "ECONNREFUSED") {
+                    console.log(`[${new Date()}] JOIN#onJoin/create[0]: game server is not responding`);
+                } else {
+                    console.log(`[${new Date()}] JOIN#onJoin/create[0]: ${e}`);
+                }
             }
         } 
     } else {
@@ -49,13 +53,12 @@ async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
     }
 
     try {
+        await applyJoin(id, lobby);
         const { data } = await axios({
             method: 'get',
             url: `http://${server}:${http}/join?uid=${id}&lid=${lobby}`,
         });
         // TODO: write lobby server and port from this response
-
-        await applyJoin(id, lobby);
 
         return {
             server,
@@ -65,7 +68,7 @@ async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
     } catch (e) {
         const ae = axiosError(e);
         if (ae) {
-            console.log(`[${new Date()}] JOIN#onJoin/join: ${ae.status}`);
+            console.log(`[${new Date()}] JOIN#onJoin/join: ${ae.data}`);
             if (ae.response === "lobby does not exist") {
                 await clearLobby(lobby);
                 if (!isSecondAttempt) {
@@ -76,7 +79,9 @@ async function onJoin(id, isPrivate, lobbyId, isSecondAttempt) {
             //     // handled
             // }
         } else if (e.errno === 1452) {
-            console.log("lobby does not exist");
+            console.log(`[${new Date()}] JOIN#onJoin/join: lobby does not exist`);
+        } else if (e.code === "ECONNREFUSED") {
+            console.log(`[${new Date()}] JOIN#onJoin/join: game server is not responding`);
         } else {
             neverHappens("JOIN#onJoin/join", e);
         }

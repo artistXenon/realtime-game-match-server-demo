@@ -2,21 +2,21 @@ const fs = require('fs');
 
 function neverHappens(from, e) {
     const d = new Date();
-    const msg = `[${d}]${from}:\n${e}\n`;
-    console.log(`[${d}]${from}: UNUSUAL ERROR RECORDED`);
+    const msg = `[${d}] ${from}:\n${e}\n`;
+    console.log(`[${d}] ${from}: UNUSUAL ERROR RECORDED`);
     try {
         fs.appendFileSync('error.txt', msg, 'utf8');
     } 
     catch (err) {} 
 }
 
-function axiosError() {
+function axiosError(e) {
     const r = e?.response;
     if (!r) return undefined;
     return {
-        state: r.state,
+        status: r.status,
         data: r.data,
-        response: r.response
+        response: r
     };
 }
 
